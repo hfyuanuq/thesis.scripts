@@ -1,0 +1,40 @@
+options(stringsAsFactors = F)
+library(stringr)
+library(dplyr)
+library(clusterProfiler)
+
+blast2go <- read.csv("Aqu3.1.GO.csv", header = TRUE)
+blast2go[blast2go==""]<-NA
+dim(blast2go)
+
+gene_ids <- blast2go$Gene
+lines_with_go <- blast2go$GOs!= ""
+
+annoations_go <- str_split(blast2go[lines_with_go,]$GOs, "; ")
+gene_to_go <- data.frame(GID = rep(gene_ids[lines_with_go],
+                                   times = sapply(annoations_go, length)),
+                         GO = unlist(annoations_go))
+gene2go<- na.omit(gene_to_go)
+
+gene2go$GO <- gsub("F:", "", gene2go$GO)
+gene2go$GO <- gsub("P:", "", gene2go$GO)
+gene2go$GO <- gsub("C:", "", gene2go$GO)
+
+head(gene2go)
+
+GO2GENE <- subset(gene2go, select=c(2,1))
+
+GO2NAME <- go2term(gene2go$GO)
+
+genelist<-read.table("gene.list/genelist.txt",header=TRUE,sep="\t")
+dim(genelist)
+
+x <- enricher(genelist$Gene,TERM2GENE=GO2GENE,TERM2NAME=GO2NAME,pvalueCutoff = 0.05, pAdjustMethod = "BH", qvalueCutoff = 0.05)
+dim(x)
+
+#x <- compareCluster(genelist, fun='enricher',TERM2GENE=GO2GENE,TERM2NAME=GO2NAME,pvalueCutoff = 0.1, pAdjustMethod = "BH", qvalueCutoff = 0.1)
+
+dotplot(x,showCategory= 10)
+
+write.csv(x, file="gene.list/GO.enrichment.csv")
+
