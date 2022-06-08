@@ -1,0 +1,22 @@
+##Combining the counts from both lanes of the CEL-Seq2 run 
+##For dataset 1(lane 1) make countsTable
+countsTable <- read.delim(file.choose(), header=TRUE, colClasses=c(“character”, rep(“numeric”, 6))) #”numeric,” followed by number refers to number of samples 
+rownames(countsTable) <- countsTable$Sample
+countsTable <- countsTable[,-1] #says that the first row is names not variables
+
+##For dataset 2(lane 2) make countsTable2
+countsTable2 <- read.delim(file.choose(), header=TRUE, colClasses=c(“character”,rep(“numeric”, 6))) 
+rownames(countsTable2) <- countsTable2$Sample
+countsTable2 <- countsTable2[,-1]
+
+
+#To combine counts 
+temp <- cbind(countsTable, countsTable2)
+countsall <- sapply(unique(colnames(temp)), function(x) rowSums(temp[, colnames(temp) == x, drop = FALSE]))
+
+#To merge samples from different matrices
+challenge <- merge(as.data.frame(countsTable), as.data.frame(countsTable2), by=”row.names”, sort=FALSE)
+
+
+##To print/write table
+write.table(countsall, “c:/mydata.tab”, sep=”\t”)
